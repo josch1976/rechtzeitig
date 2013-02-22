@@ -31,7 +31,7 @@
   "Berechnung der beweglichen und unbeweglichen Feiertage eines bestimnten
 Jahres"
   [y]
-  (let [easter (calculate-easter y)]
+  (let [easter (calculate-easter (int y))]
     [{:type :fix
       :date {:day 1 :month 1 :year y}
       :description "Neujahr (01.01.####)"}
@@ -173,7 +173,7 @@ der übergebenen Map der Feiertage `vc` enthalten ist"
   [^String date]
   (if (= date (re-matches #"\d{1,2}\.\d{1,2}\.\d{4}" date))
     (let [date-map1                (date-string->date-map date)
-          {:keys [day month year]} (date-string->date-map date-map1)
+          {:keys [day month year]} date-map1
           gc                       (GregorianCalendar. year (- month 1) day)
           date-map2                {:day   (. gc get Calendar/DAY_OF_MONTH)
                                     :month (+ (. gc get Calendar/MONTH) 1)
@@ -187,12 +187,13 @@ Fristbeginn über die 3-Tages-Fiktion der Zustellung ermittelt."
   ([date1]
      (when (valid-date? date1)
        (calculate-end date1
-                      (date-map->date-string (offset-date (date-string->date-map date1) 3)))))
+                      (date-map->date-string (offset-date (date-string->date-map date1)
+                                                          3)))))
   ([date1 date2]
      (when (and (valid-date? date1) (valid-date? date2))
-       (let [{:keys [day month year]} date1
-             gc                      (GregorianCalendar. year (- month 1) day)  
-             vc                      (create-holidays year)]
+       (let [{:keys [day month year]} (date-string->date-map date2)
+             gc                       (GregorianCalendar. year (- month 1) day)  
+             vc                       (create-holidays year)]
          (do 
            (.add gc Calendar/MONTH 1)
            (while (not (workday? {:year (.get gc Calendar/YEAR)
@@ -200,11 +201,11 @@ Fristbeginn über die 3-Tages-Fiktion der Zustellung ermittelt."
                                   :day (.get gc Calendar/DAY_OF_MONTH)}
                                  vc))
              (.add gc Calendar/DATE 1)))
-         {:letter-date {(date-string->date-map date)}
+         {:letter-date (date-string->date-map date1)
           :begin-date  {:day day
                         :month month
                         :year year}
-          :end-date    {:day (. get gc Calendar/DAY_OF_MONTH)
+          :end-date    {:day (.get gc Calendar/DAY_OF_MONTH)
                         :month (+ (.get gc Calendar/MONTH) 1)
                         :year (.get gc Calendar/YEAR)}
           }))))
@@ -216,12 +217,12 @@ Fristbeginn über die 3-Tages-Fiktion der Zustellung ermittelt."
   (let [vc (create-holidays year)
         gc (GregorianCalendar. year 0 1)]
     (loop [col []]
-      (let [date-map {:day   (. gc get Calendar/DAY_OF_MONTH)
-                      :month (+ (. gc get Calendar/MONTH) 1)
-                      :year  (. gc get Calendar/YEAR) }]
-        (if (= (. gc get Calendar/YEAR) (:year date-map))
+      (let [date-map {:day   (.get  gc Calendar/DAY_OF_MONTH)
+                      :month (+ (.get gc Calendar/MONTH) 1)
+                      :year  (.get gc Calendar/YEAR) }]
+        (if (= year (:year date-map))
           (do
-            (. gc add Calendar/DATE 1)
+            (.add gc Calendar/DATE 1)
             (if (workday? date-map vc)
               (recur (conj col date-map))
               (recur col)))
@@ -232,14 +233,14 @@ Fristbeginn über die 3-Tages-Fiktion der Zustellung ermittelt."
   "Liefert einen `vector` aller Nicht-Arbeitstage eines Jahres."
   [year]
   (let [vc (create-holidays year)
-        gc (GregorianCalendar. year 0 1)]
+        gc (GregorianCalendar. (int year) 0 1)]
     (loop [col []]
       (let [date-map {:day   (. gc get Calendar/DAY_OF_MONTH)
-                      :month (+ (. gc get Calendar/MONTH) 1)
-                      :year  (. gc get Calendar/YEAR) }]
-        (if (= (. gc get Calendar/YEAR) (:year date-map))
+                      :month (+ (.get gc Calendar/MONTH) 1)
+                      :year  (.get gc Calendar/YEAR) }]
+        (if (= year (:year date-map))
           (do
-            (. gc add Calendar/DATE 1)
+            (.add gc Calendar/DATE 1)
             (if (not (workday? date-map vc))
               (recur (conj col date-map))
               (recur col)))
