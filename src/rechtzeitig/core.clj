@@ -6,11 +6,11 @@
 
 ;; 'forward declaration' der verwendeten Funktionen
 (declare 
-  create-vacation-days
-  calculate-easter
+  create-holidays
+  prettify-date-string
   date-map->date-string
   date-string->date-map
-  prettify-date-string
+  calculate-easter
   offset-date
   weekend?
   feast?
@@ -18,7 +18,6 @@
   list-feasts
   valid-date?
   calculate-end
-  add-fiction-days
   working-day-col
   no-working-day-col)
 
@@ -83,7 +82,8 @@ Jahres"
 
 
 (defn prettify-date-string
-  "Wandelt einen Datumsstring in das Format dd.mm.yyyy um. Aus 1.1.12 wird 01.01.2012"
+  "Wandelt einen Datumsstring in das Format dd.mm.yyyy um. Aus 1.1.12
+ wird 01.01.2012"
   [date-string]
   (let [[d m y] (vec (.split date-string  "\\."))]
     (str
@@ -95,13 +95,15 @@ Jahres"
 
 
 (defn date-map->date-string
-  "Wandelt ein Datum im Format {:day 2 :month 12 :year 2012} in einen Datumsstring '02.12.2012' um."
+  "Wandelt ein Datum im Format {:day 2 :month 12 :year 2012} in einen 
+Datumsstring '02.12.2012' um."
   [date-map]
   (prettify-date-string (str (:day date-map) "." (:month date-map) "." (:year date-map))))
 
 
 (defn date-string->date-map
-  "Wandelt einen Datumsstring '02.12.2012' in das Format {:day 2 :month 12 :year 2012} um."
+  "Wandelt einen Datumsstring '02.12.2012' in das Format
+{:day 2 :month 12 :year 2012} um."
   [date-string]
   (let [[d m y] (map #(Integer/parseInt %) (.split date-string "\\."))]
     {:day d
@@ -125,7 +127,7 @@ Jahres"
 
 
 (defn offset-date
-  "Berechnung eines Datums x Tage vor oder nach dem beweglichen Festtag Ostern"
+  "Berechnung eines Datums x Tage vor oder nach einem Tag"
   [date-map count-incdrec]
   (let [gc (Calendar/getInstance Locale/GERMAN)]
     (doto gc
